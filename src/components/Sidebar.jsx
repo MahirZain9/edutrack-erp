@@ -58,15 +58,15 @@ const Sidebar = ({
       )}
 
       <aside className={`
-        fixed top-0 bottom-0 left-0 z-45 flex flex-col w-64 bg-white border-r border-slate-100 transition-transform duration-300 transform lg:translate-x-0 lg:static
+        fixed top-0 bottom-0 left-0 z-50 flex flex-col w-64 bg-white border-r border-slate-100 transition-transform duration-300 transform lg:translate-x-0 lg:static
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Branding header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="EduTrack Logo" className="w-9 h-9 object-contain" />
+            <img src={logo} alt="Era Campus Logo" className="w-9 h-9 object-contain" />
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-800">EduTrack</h1>
+              <h1 className="text-xl font-bold tracking-tight text-slate-800">Era Campus</h1>
               <p className="text-[10px] text-rose-500 font-semibold tracking-wider uppercase">School Portal</p>
             </div>
           </div>
