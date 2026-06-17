@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useDatabase } from '../context/DatabaseContext';
-import { 
-  User, 
-  CalendarCheck, 
-  CreditCard, 
-  Download, 
-  BellRing, 
-  AlertTriangle, 
+import {
+  User,
+  CalendarCheck,
+  CreditCard,
+  Download,
+  BellRing,
+  AlertTriangle,
   Sparkles,
   ArrowRight,
   TrendingUp,
@@ -20,14 +20,17 @@ import { formatINR, formatDate } from '../utils';
 const ParentDashboard = ({ user }) => {
   const { students, fees, receipts, attendance, classes } = useDatabase();
   const [selectedChildId, setSelectedChildId] = useState('');
-  
+
   // Modal states
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [activeReceipt, setActiveReceipt] = useState(null);
 
   // Filter children matching parent's mobile number
-  const children = students.filter(s => s.parentMobile === user.mobile);
-
+  const children = students.filter(s => {
+    const dbMobile = String(s.parentMobile || '').replace(/\D/g, '').slice(-10);
+    const userMobile = String(user.mobile || '').replace(/\D/g, '').slice(-10);
+    return dbMobile === userMobile;
+  });
   useEffect(() => {
     if (children.length > 0 && !selectedChildId) {
       setSelectedChildId(children[0].id);
@@ -37,7 +40,7 @@ const ParentDashboard = ({ user }) => {
   const selectedChild = children.find(c => c.id === selectedChildId);
 
   // --- STATS & HISTORY FOR SELECTED CHILD ---
-  
+
   // Attendance calculations
   const getChildAttendanceStats = () => {
     if (!selectedChild) return { percentage: 0, present: 0, absent: 0, late: 0, history: [] };
@@ -129,7 +132,7 @@ const ParentDashboard = ({ user }) => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      
+
       {/* Welcome & Sibling Switcher Bar */}
       <div className="p-6 md:p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
         <div>
@@ -147,8 +150,8 @@ const ParentDashboard = ({ user }) => {
                 onClick={() => setSelectedChildId(c.id)}
                 className={`
                   px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200
-                  ${selectedChildId === c.id 
-                    ? 'bg-rose-600 text-white shadow-sm' 
+                  ${selectedChildId === c.id
+                    ? 'bg-rose-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-200 hover:text-slate-800'
                   }
                 `}
@@ -164,15 +167,15 @@ const ParentDashboard = ({ user }) => {
         <>
           {/* Dashboard Grid layouts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* Child Profile summary */}
             <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-5 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <img 
-                    src={selectedChild.photo} 
-                    alt={selectedChild.fullName} 
-                    className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-sm" 
+                  <img
+                    src={selectedChild.photo}
+                    alt={selectedChild.fullName}
+                    className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-sm"
                   />
                   <div>
                     <h3 className="text-lg font-bold text-slate-800">{selectedChild.fullName}</h3>
@@ -214,7 +217,7 @@ const ParentDashboard = ({ user }) => {
             {/* Attendance circle progress */}
             <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col justify-center items-center text-center space-y-4">
               <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Attendance Status</h3>
-              
+
               <div className="relative w-36 h-36 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="40" stroke="#f1f5f9" strokeWidth="8" fill="transparent" />
@@ -253,14 +256,14 @@ const ParentDashboard = ({ user }) => {
                 <BellRing size={18} className="text-rose-500" />
                 Alerts & Reminders
               </h3>
-              
+
               <div className="space-y-3">
                 {alerts.map(alert => (
-                  <div 
-                    key={alert.id} 
+                  <div
+                    key={alert.id}
                     className={`p-3.5 rounded-xl border flex gap-3 text-xs leading-normal animate-fade-in
-                      ${alert.severity === 'danger' 
-                        ? 'bg-rose-50 border-rose-100 text-rose-700' 
+                      ${alert.severity === 'danger'
+                        ? 'bg-rose-50 border-rose-100 text-rose-700'
                         : 'bg-amber-50 border-amber-100 text-amber-700'
                       }
                     `}
@@ -286,11 +289,11 @@ const ParentDashboard = ({ user }) => {
 
           {/* Bottom Grid: Attendance log list vs Fee history receipts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
+
             {/* Attendance ledger log */}
             <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm">
               <h3 className="text-lg font-bold text-slate-800 mb-4 tracking-tight">Recent Roll Roster Log</h3>
-              
+
               <div className="overflow-y-auto max-h-[280px] divide-y divide-slate-100/50 pr-2">
                 {att.history.map(item => (
                   <div key={item.date} className="flex justify-between items-center py-3">
@@ -299,11 +302,11 @@ const ParentDashboard = ({ user }) => {
                       {formatDate(item.date)}
                     </span>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border
-                      ${item.status === 'Present' 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                        : item.status === 'Late' 
-                        ? 'bg-amber-50 text-amber-700 border-amber-100' 
-                        : 'bg-rose-50 text-rose-700 border-rose-100'
+                      ${item.status === 'Present'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        : item.status === 'Late'
+                          ? 'bg-amber-50 text-amber-700 border-amber-100'
+                          : 'bg-rose-50 text-rose-700 border-rose-100'
                       }
                     `}>
                       {item.status}
@@ -321,7 +324,7 @@ const ParentDashboard = ({ user }) => {
             {/* Fee Invoices & Receipts download */}
             <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm">
               <h3 className="text-lg font-bold text-slate-800 mb-4 tracking-tight">Fee Invoice Ledgers</h3>
-              
+
               <div className="overflow-y-auto max-h-[280px] divide-y divide-slate-100/50 pr-2">
                 {childFees.map(fee => (
                   <div key={fee.id} className="flex justify-between items-center py-4">
@@ -372,7 +375,7 @@ const ParentDashboard = ({ user }) => {
         title="Payment Collection Receipt"
       >
         {activeReceipt && (
-          <ReceiptPDF 
+          <ReceiptPDF
             receipt={activeReceipt}
             student={students.find(s => s.id === activeReceipt.studentId)}
             fee={fees.find(f => f.id === activeReceipt.feeId)}

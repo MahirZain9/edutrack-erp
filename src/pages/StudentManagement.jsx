@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useDatabase } from '../context/DatabaseContext';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  UserPlus, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  UserPlus,
   Filter,
   CheckCircle,
   XCircle,
@@ -16,17 +16,26 @@ import Modal from '../components/Modal';
 import { formatDate } from '../utils';
 
 const StudentManagement = () => {
-  const { students, addStudent, updateStudent, deleteStudent, classes } = useDatabase();
-  
+  // Replace this at the top of the file or inside the component before return
+  const classes = [
+    { id: 'std1', name: 'Std 1' }, { id: 'std2', name: 'Std 2' },
+    { id: 'std3', name: 'Std 3' }, { id: 'std4', name: 'Std 4' },
+    { id: 'std5', name: 'Std 5' }, { id: 'std6', name: 'Std 6' },
+    { id: 'std7', name: 'Std 7' }, { id: 'std8', name: 'Std 8' },
+    { id: 'std9', name: 'Std 9' }, { id: 'std10', name: 'Std 10' },
+    { id: 'std11', name: 'Std 11' }, { id: 'std12', name: 'Std 12' }
+  ];
+  const { students, addStudent, updateStudent, deleteStudent } = useDatabase();
+
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [classFilter, setClassFilter] = useState('');
-  
+
   // Modals state
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  
+
   // Form fields state
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState('');
@@ -67,11 +76,11 @@ const StudentManagement = () => {
     setParentName('');
     setParentMobile('');
     setAddress('');
-    
+
     // Default avatar SVG as string fallback
     const initials = 'ST';
     setPhoto(`data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect width="100%" height="100%" fill="%23FFE4E6"/><text x="50" y="55" font-family="Arial" font-size="36" font-weight="bold" fill="%23BE123C" text-anchor="middle" dominant-baseline="middle">${initials}</text></svg>`);
-    
+
     setFormModalOpen(true);
   };
 
@@ -89,13 +98,13 @@ const StudentManagement = () => {
     setParentMobile(stud.parentMobile);
     setAddress(stud.address);
     setPhoto(stud.photo);
-    
+
     setFormModalOpen(true);
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Dynamically adjust default SVG avatar initials on save if using default photo
     let finalPhoto = photo;
     if (photo.startsWith('data:image/svg+xml;utf8,<svg')) {
@@ -145,15 +154,15 @@ const StudentManagement = () => {
   // Filter and search logic
   const filteredStudents = students.filter(s => {
     const matchesSearch = s.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          s.admissionNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          s.rollNumber.includes(searchQuery);
+      s.admissionNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.rollNumber.includes(searchQuery);
     const matchesClass = classFilter === '' || s.classId === classFilter;
     return matchesSearch && matchesClass;
   });
 
   return (
     <div className="space-y-6 animate-fade-in">
-      
+
       {/* Header Panel */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
         <div>
@@ -172,7 +181,7 @@ const StudentManagement = () => {
 
       {/* Search and Filters Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-        
+
         {/* Search input */}
         <div className="relative sm:col-span-2">
           <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -206,7 +215,7 @@ const StudentManagement = () => {
 
       {/* Student List Grid / Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        
+
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -226,10 +235,10 @@ const StudentManagement = () => {
                   {/* Photo & Name */}
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={stud.photo} 
-                        alt={stud.fullName} 
-                        className="w-10 h-10 rounded-xl object-cover shadow-sm bg-slate-100 shrink-0 border border-slate-200/50" 
+                      <img
+                        src={stud.photo}
+                        alt={stud.fullName}
+                        className="w-10 h-10 rounded-xl object-cover shadow-sm bg-slate-100 shrink-0 border border-slate-200/50"
                       />
                       <div>
                         <h4 className="font-bold text-slate-800">{stud.fullName}</h4>
@@ -257,8 +266,8 @@ const StudentManagement = () => {
                     <button
                       onClick={() => handleStatusToggle(stud)}
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all duration-200
-                        ${stud.status === 'Active' 
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100' 
+                        ${stud.status === 'Active'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100'
                           : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'
                         }
                       `}
@@ -316,20 +325,19 @@ const StudentManagement = () => {
           {filteredStudents.map(stud => (
             <div key={stud.id} className="p-4 border border-slate-100 rounded-2xl space-y-3.5 shadow-sm">
               <div className="flex items-center gap-3">
-                <img 
-                  src={stud.photo} 
-                  alt={stud.fullName} 
-                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 bg-slate-50" 
+                <img
+                  src={stud.photo}
+                  alt={stud.fullName}
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 bg-slate-50"
                 />
                 <div className="flex-1">
                   <h4 className="font-bold text-slate-800">{stud.fullName}</h4>
                   <p className="text-[10px] text-slate-400 font-medium">Roll Number: {stud.rollNumber} | GR: {stud.admissionNumber}</p>
                 </div>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                  stud.status === 'Active' 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                    : 'bg-slate-50 text-slate-500 border-slate-200'
-                }`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${stud.status === 'Active'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                  : 'bg-slate-50 text-slate-500 border-slate-200'
+                  }`}>
                   {stud.status}
                 </span>
               </div>
@@ -375,24 +383,24 @@ const StudentManagement = () => {
       </div>
 
       {/* Add / Edit Form Modal */}
-      <Modal 
-        isOpen={formModalOpen} 
+      <Modal
+        isOpen={formModalOpen}
         onClose={() => setFormModalOpen(false)}
         title={isEditing ? 'Edit Student Details' : 'New Admission Registration'}
       >
         <form onSubmit={handleFormSubmit} className="space-y-4">
-          
+
           {/* Avatar Upload Grid */}
           <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md bg-white border border-slate-200 group">
               <img src={photo} alt="Avatar Preview" className="w-full h-full object-cover" />
               <label className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white cursor-pointer transition-opacity duration-200">
                 <Camera size={18} />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handlePhotoUpload} 
-                  className="hidden" 
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
                 />
               </label>
             </div>
@@ -403,7 +411,7 @@ const StudentManagement = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
+
             {/* Full Name */}
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
@@ -569,20 +577,20 @@ const StudentManagement = () => {
       </Modal>
 
       {/* View Profile Detail Modal */}
-      <Modal 
-        isOpen={profileModalOpen} 
+      <Modal
+        isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
         title="Student Academic Profile"
       >
         {selectedStudent && (
           <div className="space-y-6">
-            
+
             {/* Header info */}
             <div className="flex flex-col sm:flex-row items-center gap-5 pb-5 border-b border-slate-100">
-              <img 
-                src={selectedStudent.photo} 
-                alt={selectedStudent.fullName} 
-                className="w-20 h-20 rounded-2xl object-cover border border-slate-200 shadow-md bg-slate-50 shrink-0" 
+              <img
+                src={selectedStudent.photo}
+                alt={selectedStudent.fullName}
+                className="w-20 h-20 rounded-2xl object-cover border border-slate-200 shadow-md bg-slate-50 shrink-0"
               />
               <div className="text-center sm:text-left space-y-1">
                 <h3 className="text-2xl font-extrabold text-slate-800 tracking-tight">{selectedStudent.fullName}</h3>
@@ -593,9 +601,8 @@ const StudentManagement = () => {
                   <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-mono font-bold">
                     Roll Number: {selectedStudent.rollNumber}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    selectedStudent.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-500'
-                  }`}>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${selectedStudent.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-500'
+                    }`}>
                     {selectedStudent.status}
                   </span>
                 </div>
