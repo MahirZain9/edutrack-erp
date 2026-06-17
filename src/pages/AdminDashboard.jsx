@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useDatabase } from '../context/DatabaseContext';
-import { 
-  Users, 
-  CalendarCheck, 
-  IndianRupee, 
+import {
+  Users,
+  CalendarCheck,
+  IndianRupee,
   AlertTriangle,
   PlusCircle,
   CheckSquare,
@@ -25,16 +25,16 @@ const AdminDashboard = ({ setCurrentTab }) => {
 
   // --- STATS CALCULATIONS ---
   const totalStudents = students.filter(s => s.status === 'Active').length;
-  
+
   // Today's Attendance calculation (fallback to latest date with records if today has none)
   const getLatestAttendanceStats = () => {
     const dates = Object.keys(attendance).map(k => k.split('_')[1]).sort();
     if (dates.length === 0) return { percent: 0, text: 'No records' };
     const latestDate = dates[dates.length - 1];
-    
+
     let total = 0;
     let present = 0;
-    
+
     Object.keys(attendance).forEach(key => {
       if (key.endsWith(latestDate)) {
         const records = attendance[key].records || {};
@@ -49,13 +49,13 @@ const AdminDashboard = ({ setCurrentTab }) => {
 
     if (total === 0) return { percent: 0, text: '0/0 Students' };
     const percent = Math.round((present / total) * 100);
-    return { 
-      percent, 
-      text: `${present}/${total} Students`, 
-      date: latestDate 
+    return {
+      percent,
+      text: `${present}/${total} Students`,
+      date: latestDate
     };
   };
-  
+
   const attStats = getLatestAttendanceStats();
 
   // Fee Stats
@@ -93,12 +93,12 @@ const AdminDashboard = ({ setCurrentTab }) => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      
+
       {/* Welcome Banner */}
       <div className="p-6 md:p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Welcome, Administrator</h1>
-          <p className="text-slate-500 text-sm mt-1">Here is what's happening at EduTrack school today.</p>
+          <p className="text-slate-500 text-sm mt-1">Here is what's happening at Era Campus school today.</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100 text-xs font-bold shadow-sm">
           <TrendingUp size={16} />
@@ -108,7 +108,7 @@ const AdminDashboard = ({ setCurrentTab }) => {
 
       {/* Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
+
         {/* Card 1: Total Students */}
         <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-premium hover:shadow-premium-hover transition-all duration-300 flex items-center gap-5 hover-scale">
           <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
@@ -163,8 +163,8 @@ const AdminDashboard = ({ setCurrentTab }) => {
       <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm">
         <h3 className="text-lg font-bold text-slate-800 mb-5 tracking-tight">Quick Actions</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          
-          <button 
+
+          <button
             onClick={() => setCurrentTab('students')}
             className="flex flex-col items-center justify-center p-5 border border-slate-100 rounded-2xl hover:bg-rose-50/50 hover:border-rose-100 hover:text-rose-600 transition-all duration-300 group"
             id="action-add-student"
@@ -175,7 +175,7 @@ const AdminDashboard = ({ setCurrentTab }) => {
             <span className="text-sm font-bold">Add Student</span>
           </button>
 
-          <button 
+          <button
             onClick={() => setCurrentTab('attendance')}
             className="flex flex-col items-center justify-center p-5 border border-slate-100 rounded-2xl hover:bg-rose-50/50 hover:border-rose-100 hover:text-rose-600 transition-all duration-300 group"
             id="action-take-attendance"
@@ -186,7 +186,7 @@ const AdminDashboard = ({ setCurrentTab }) => {
             <span className="text-sm font-bold">Take Attendance</span>
           </button>
 
-          <button 
+          <button
             onClick={() => setCurrentTab('fees')}
             className="flex flex-col items-center justify-center p-5 border border-slate-100 rounded-2xl hover:bg-rose-50/50 hover:border-rose-100 hover:text-rose-600 transition-all duration-300 group"
             id="action-collect-fees"
@@ -197,7 +197,7 @@ const AdminDashboard = ({ setCurrentTab }) => {
             <span className="text-sm font-bold">Collect Fees</span>
           </button>
 
-          <button 
+          <button
             onClick={() => setNotificationModalOpen(true)}
             className="flex flex-col items-center justify-center p-5 border border-slate-100 rounded-2xl hover:bg-rose-50/50 hover:border-rose-100 hover:text-rose-600 transition-all duration-300 group"
             id="action-send-notification"
@@ -213,19 +213,19 @@ const AdminDashboard = ({ setCurrentTab }) => {
 
       {/* Bottom Layout: Recent Payments & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Recent receipts */}
         <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm lg:col-span-2">
           <div className="flex justify-between items-center mb-5">
             <h3 className="text-lg font-bold text-slate-800 tracking-tight">Recent Fee Transactions</h3>
-            <button 
+            <button
               onClick={() => setCurrentTab('fees')}
               className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
             >
               View All <ArrowRight size={14} />
             </button>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -288,8 +288,8 @@ const AdminDashboard = ({ setCurrentTab }) => {
       </div>
 
       {/* Send Notification Modal */}
-      <Modal 
-        isOpen={notificationModalOpen} 
+      <Modal
+        isOpen={notificationModalOpen}
         onClose={() => setNotificationModalOpen(false)}
         title="Send Announcement / Notification"
       >
