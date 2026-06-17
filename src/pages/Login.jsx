@@ -73,9 +73,9 @@ const Login = () => {
         {/* Header Branding */}
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 p-3 bg-rose-50 rounded-2xl shadow-inner flex items-center justify-center mb-4 border border-rose-100 hover-scale">
-            <img src={logo} alt="EduTrack Logo" className="w-12 h-12 object-contain" />
+            <img src={logo} alt="Era Campus Logo" className="w-12 h-12 object-contain" />
           </div>
-          <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">EduTrack</h2>
+          <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Era Campus</h2>
           <p className="mt-1.5 text-sm text-slate-500 font-medium">Unified School ERP Portal</p>
         </div>
 
@@ -134,7 +134,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200"
-                    placeholder="admin@edutrack.com"
+                    placeholder="admin@eracampus.com"
                     id="staff-email"
                   />
                 </div>
@@ -176,19 +176,19 @@ const Login = () => {
               <p className="font-bold text-slate-600 mb-0.5 flex items-center gap-1">
                 <Sparkles size={12} className="text-amber-500" /> Sandbox Login Hints:
               </p>
-              <p>• <b>Admin</b>: admin@edutrack.com | admin123</p>
-              <p className="mt-0.5">• <b>Teacher</b>: teacher@edutrack.com | teacher123</p>
+              <p>• <b>Admin</b>: admin@eracampus.com | admin123</p>
+              <p className="mt-0.5">• <b>Teacher</b>: teacher@eracampus.com | teacher123</p>
               
               <button
                 type="button"
                 onClick={() => {
-                  localStorage.removeItem('edutrack_classes');
-                  localStorage.removeItem('edutrack_users');
-                  localStorage.removeItem('edutrack_students');
-                  localStorage.removeItem('edutrack_attendance');
-                  localStorage.removeItem('edutrack_fees');
-                  localStorage.removeItem('edutrack_receipts');
-                  localStorage.removeItem('edutrack_current_user');
+                  localStorage.removeItem('eracampus_classes');
+                  localStorage.removeItem('eracampus_users');
+                  localStorage.removeItem('eracampus_students');
+                  localStorage.removeItem('eracampus_attendance');
+                  localStorage.removeItem('eracampus_fees');
+                  localStorage.removeItem('eracampus_receipts');
+                  localStorage.removeItem('eracampus_current_user');
                   window.location.reload();
                 }}
                 className="w-full text-center mt-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold rounded-lg transition-colors"
@@ -285,13 +285,13 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => {
-                  localStorage.removeItem('edutrack_classes');
-                  localStorage.removeItem('edutrack_users');
-                  localStorage.removeItem('edutrack_students');
-                  localStorage.removeItem('edutrack_attendance');
-                  localStorage.removeItem('edutrack_fees');
-                  localStorage.removeItem('edutrack_receipts');
-                  localStorage.removeItem('edutrack_current_user');
+                  localStorage.removeItem('eracampus_classes');
+                  localStorage.removeItem('eracampus_users');
+                  localStorage.removeItem('eracampus_students');
+                  localStorage.removeItem('eracampus_attendance');
+                  localStorage.removeItem('eracampus_fees');
+                  localStorage.removeItem('eracampus_receipts');
+                  localStorage.removeItem('eracampus_current_user');
                   window.location.reload();
                 }}
                 className="w-full text-center mt-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold rounded-lg transition-colors"
