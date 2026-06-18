@@ -1,23 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { auth } from '../firebase';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import logo from '../assets/logo.svg';
 import { Mail, Lock, Phone, KeyRound, Sparkles, LogIn } from 'lucide-react';
 
 const Login = () => {
   const { loginWithEmail, loginParent } = useAuth();
-  const [activeTab, setActiveTab] = useState('staff'); // 'staff' or 'parent'
-  
-  // Staff inputs
+  const [activeTab, setActiveTab] = useState('staff');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  // Parent inputs
+
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  
+  const [confirmationResult, setConfirmationResult] = useState(null);
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const recaptchaVerifierRef = useRef(null);
+
+  useEffect(() => {
+    if (activeTab === 'parent') {
+      setupRecaptcha();
+    }
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    };
+  }, [activeTab]);
+
+  const setupRecaptcha = () => {
+    if (recaptchaVerifierRef.current) return;
+    recaptchaVerifierRef.current = new RecaptchaVerifier(
+      auth,
+      'recaptcha-container',
+      { size: 'invisible' }
+    );
+  };
 
   const handleStaffLogin = async (e) => {
     e.preventDefault();
@@ -32,7 +56,7 @@ const Login = () => {
     }
   };
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!mobile || mobile.length < 10) {
       setError('Please enter a valid 10-digit mobile number.');
@@ -40,37 +64,68 @@ const Login = () => {
     }
     setError('');
     setLoading(true);
-    // Simulate sending OTP
-    setTimeout(() => {
-      setOtpSent(true);
-      setLoading(false);
-      setError('');
-    }, 800);
-  };
-
-  const handleParentLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
     try {
-      await loginParent(mobile, otp);
+      if (!recaptchaVerifierRef.current) setupRecaptcha();
+      const result = await signInWithPhoneNumber(
+        auth,
+        '+91' + mobile,
+        recaptchaVerifierRef.current
+      );
+      setConfirmationResult(result);
+      setOtpSent(true);
     } catch (err) {
-      setError(err.message || 'Authentication failed.');
+      setError(err.message || 'OTP send karne mein error aaya.');
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+      setupRecaptcha();
     } finally {
       setLoading(false);
     }
   };
 
+  const handleParentLogin = async (e) => {
+    e.preventDefault();
+    if (!confirmationResult) {
+      setError('Pehle OTP bhejo.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const result = await confirmationResult.confirm(otp);
+      await loginParent(mobile, result.user);
+    } catch (err) {
+      setError('Invalid OTP. Dobara try karo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangeNumber = () => {
+    setOtpSent(false);
+    setOtp('');
+    setConfirmationResult(null);
+    setError('');
+    if (recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current.clear();
+      recaptchaVerifierRef.current = null;
+    }
+    setupRecaptcha();
+  };
+
   return (
     <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-rose-500 via-rose-600 to-rose-900">
-      
-      {/* Visual background decorations */}
+
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
 
+      {/* ✅ Zaroori hai — hatana mat */}
+      <div id="recaptcha-container"></div>
+
       <div className="relative w-full max-w-md space-y-8 p-8 bg-white/95 rounded-3xl shadow-2xl border border-white/20 glass-card">
-        
-        {/* Header Branding */}
+
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 p-3 bg-rose-50 rounded-2xl shadow-inner flex items-center justify-center mb-4 border border-rose-100 hover-scale">
             <img src={logo} alt="Era Campus Logo" className="w-12 h-12 object-contain" />
@@ -79,40 +134,25 @@ const Login = () => {
           <p className="mt-1.5 text-sm text-slate-500 font-medium">Unified School ERP Portal</p>
         </div>
 
-        {/* Tab switchers */}
         <div className="flex p-1 bg-slate-100 rounded-xl">
           <button
-            onClick={() => {
-              setActiveTab('staff');
-              setError('');
-              setOtpSent(false);
-            }}
+            onClick={() => { setActiveTab('staff'); setError(''); setOtpSent(false); }}
             className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
-              activeTab === 'staff' 
-                ? 'bg-white text-rose-600 shadow-sm' 
-                : 'text-slate-500 hover:text-slate-800'
+              activeTab === 'staff' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
             }`}
-            id="tab-staff"
           >
             Staff Login
           </button>
           <button
-            onClick={() => {
-              setActiveTab('parent');
-              setError('');
-            }}
+            onClick={() => { setActiveTab('parent'); setError(''); }}
             className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
-              activeTab === 'parent' 
-                ? 'bg-white text-rose-600 shadow-sm' 
-                : 'text-slate-500 hover:text-slate-800'
+              activeTab === 'parent' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
             }`}
-            id="tab-parent"
           >
             Parent Login
           </button>
         </div>
 
-        {/* Error message alerts */}
         {error && (
           <div className="p-3.5 bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold rounded-xl animate-fade-in flex gap-2">
             <span className="shrink-0 flex items-center justify-center w-4 h-4 bg-rose-200 text-rose-700 rounded-full font-bold">!</span>
@@ -120,7 +160,6 @@ const Login = () => {
           </div>
         )}
 
-        {/* Forms */}
         {activeTab === 'staff' ? (
           <form className="mt-6 space-y-5" onSubmit={handleStaffLogin}>
             <div className="space-y-4">
@@ -129,56 +168,41 @@ const Login = () => {
                 <div className="relative mt-1">
                   <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
-                    type="email"
-                    required
-                    value={email}
+                    type="email" required value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200"
                     placeholder="admin@eracampus.com"
-                    id="staff-email"
                   />
                 </div>
               </div>
-              
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase px-1">Password</label>
                 <div className="relative mt-1">
                   <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
-                    type="password"
-                    required
-                    value={password}
+                    type="password" required value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200"
                     placeholder="••••••••"
-                    id="staff-password"
                   />
                 </div>
               </div>
             </div>
-
             <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient hover:school-gradient-hover rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50"
-                id="staff-login-btn"
-              >
+              <button type="submit" disabled={loading}
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50">
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <LogIn className="h-4 w-4 text-rose-200 group-hover:text-white" />
                 </span>
                 {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </div>
-
-            {/* Help Hints */}
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] text-slate-500 leading-normal">
               <p className="font-bold text-slate-600 mb-0.5 flex items-center gap-1">
                 <Sparkles size={12} className="text-amber-500" /> Sandbox Login Hints:
               </p>
               <p>• <b>Admin</b>: admin@eracampus.com | admin123</p>
               <p className="mt-0.5">• <b>Teacher</b>: teacher@eracampus.com | teacher123</p>
-              
               <button
                 type="button"
                 onClick={() => {
@@ -192,12 +216,12 @@ const Login = () => {
                   window.location.reload();
                 }}
                 className="w-full text-center mt-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold rounded-lg transition-colors"
-                id="reset-db-btn"
               >
                 Reset Database to Defaults
               </button>
             </div>
           </form>
+
         ) : (
           <form className="mt-6 space-y-5" onSubmit={otpSent ? handleParentLogin : handleSendOtp}>
             <div className="space-y-4">
@@ -206,15 +230,11 @@ const Login = () => {
                 <div className="relative mt-1">
                   <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
-                    type="tel"
-                    required
-                    maxLength={10}
-                    disabled={otpSent}
-                    value={mobile}
+                    type="tel" required maxLength={10}
+                    disabled={otpSent} value={mobile}
                     onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
                     className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 disabled:opacity-60"
                     placeholder="9876543210"
-                    id="parent-mobile"
                   />
                 </div>
               </div>
@@ -225,23 +245,16 @@ const Login = () => {
                   <div className="relative mt-1">
                     <KeyRound size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
-                      type="text"
-                      required
-                      maxLength={6}
-                      value={otp}
+                      type="text" required maxLength={6} value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                       className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200"
-                      placeholder="Enter 123456"
-                      id="parent-otp"
+                      placeholder="6-digit OTP"
                     />
                   </div>
                   <div className="flex justify-between items-center mt-2 px-1">
-                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">OTP Sent!</span>
-                    <button
-                      type="button"
-                      onClick={() => setOtpSent(false)}
-                      className="text-[10px] font-bold text-rose-600 hover:underline"
-                    >
+                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">✅ OTP Sent!</span>
+                    <button type="button" onClick={handleChangeNumber}
+                      className="text-[10px] font-bold text-rose-600 hover:underline">
                       Change Number
                     </button>
                   </div>
@@ -251,37 +264,26 @@ const Login = () => {
 
             <div className="pt-2">
               {otpSent ? (
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient hover:school-gradient-hover rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50"
-                  id="parent-verify-btn"
-                >
+                <button type="submit" disabled={loading}
+                  className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50">
                   <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                     <LogIn className="h-4 w-4 text-rose-200 group-hover:text-white" />
                   </span>
                   {loading ? 'Verifying OTP...' : 'Verify & Login'}
                 </button>
               ) : (
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient hover:school-gradient-hover rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50"
-                  id="parent-send-otp-btn"
-                >
+                <button type="submit" disabled={loading}
+                  className="w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50">
                   {loading ? 'Sending OTP...' : 'Request Verification OTP'}
                 </button>
               )}
             </div>
 
-            {/* Help Hints */}
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] text-slate-500 leading-normal">
               <p className="font-bold text-slate-600 mb-0.5 flex items-center gap-1">
-                <Sparkles size={12} className="text-amber-500" /> Sandbox Login Hints:
+                <Sparkles size={12} className="text-amber-500" /> Note:
               </p>
-              <p>• <b>Registered Mobile</b>: 9876543210</p>
-              <p className="mt-0.5">• <b>OTP Code</b>: 123456</p>
-              
+              <p>Real OTP aapke registered mobile number par aayega.</p>
               <button
                 type="button"
                 onClick={() => {
@@ -295,7 +297,6 @@ const Login = () => {
                   window.location.reload();
                 }}
                 className="w-full text-center mt-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold rounded-lg transition-colors"
-                id="reset-db-btn-parent"
               >
                 Reset Database to Defaults
               </button>
