@@ -13,5 +13,5 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-
+// ✅ Yeh line zaroori hai — AuthContext isko use karta hai
 export const isFirebaseConfigured = true;
