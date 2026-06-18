@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, isFirebaseConfigured } from '../firebase';
-import { signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged, signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
 import { dbService } from '../services/db';
 
 const AuthContext = createContext(null);
@@ -14,18 +14,16 @@ export const AuthProvider = ({ children }) => {
     if (isFirebaseConfigured && auth) {
       const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
         if (fbUser) {
-          // Fetch additional user role data from dbService
           const users = await dbService.getUsers();
           const dbUser = users.find(u => u.uid === fbUser.uid);
           if (dbUser) {
             setUser(dbUser);
           } else {
-            // Default user fallback if auth exists but record doesn't
             setUser({
               uid: fbUser.uid,
               name: fbUser.displayName || fbUser.email.split('@')[0],
               email: fbUser.email,
-              role: 'Teacher', // Default role for external signups
+              role: 'Teacher',
               assignedClassId: ''
             });
           }
@@ -36,7 +34,6 @@ export const AuthProvider = ({ children }) => {
       });
       return unsubscribe;
     } else {
-      // Local storage session persistence
       const savedUser = localStorage.getItem('edutrack_current_user');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
@@ -49,7 +46,6 @@ export const AuthProvider = ({ children }) => {
   const loginWithEmail = async (email, password) => {
     if (isFirebaseConfigured && auth) {
       const credentials = await signInWithEmailAndPassword(auth, email, password);
-      // Fetch user profile from db
       const users = await dbService.getUsers();
       const matched = users.find(u => u.uid === credentials.user.uid);
       if (matched) {
@@ -58,7 +54,6 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    // Local Storage Mock Authentication
     const users = await dbService.getUsers();
     const matchedUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
@@ -71,23 +66,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login for Parent (Mobile number + OTP simulation)
-  const loginParent = async (mobileNumber, otp) => {
-    // Basic verification
-    if (!mobileNumber || mobileNumber.length < 10) {
-      throw new Error("Please enter a valid 10-digit mobile number.");
-    }
-    
-    if (otp !== '123456' && otp !== '000000') {
-      throw new Error("Invalid OTP. For demo mode, please use 123456 or 000000.");
-    }
-
-    // Check if parent mobile number exists in students parent list
+  // ✅ Login for Parent (Firebase Real OTP)
+  const loginParent = async (mobileNumber, firebaseUser) => {
     const students = await dbService.getStudents();
     const childRecords = students.filter(s => s.parentMobile === mobileNumber);
 
     if (childRecords.length === 0) {
-      throw new Error("No student is registered with this parent mobile number.");
+      throw new Error("Is mobile number se koi student registered nahi hai.");
     }
 
     const parentUser = {
