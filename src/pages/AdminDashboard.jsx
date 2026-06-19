@@ -16,7 +16,7 @@ import Modal from '../components/Modal';
 import { formatINR, formatDate } from '../utils';
 
 const AdminDashboard = ({ setCurrentTab }) => {
-  const { students, fees, receipts, attendance } = useDatabase();
+  const { students, fees, receipts, attendance, classes: dbClasses } = useDatabase();
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [notiSubject, setNotiSubject] = useState('');
   const [notiBody, setNotiBody] = useState('');
@@ -84,12 +84,12 @@ const AdminDashboard = ({ setCurrentTab }) => {
     }, 1500);
   };
 
-  const classes = [
-    { name: 'Std 9 - Div A', code: 'c1', bg: 'bg-emerald-500' },
-    { name: 'Std 9 - Div B', code: 'c2', bg: 'bg-indigo-500' },
-    { name: 'Std 10 - Div A', code: 'c3', bg: 'bg-rose-500' },
-    { name: 'Std 10 - Div B', code: 'c4', bg: 'bg-amber-500' },
-  ];
+  const colorPalette = ['bg-emerald-500', 'bg-indigo-500', 'bg-rose-500', 'bg-amber-500', 'bg-sky-500', 'bg-purple-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500', 'bg-pink-500'];
+  const classes = dbClasses.map((c, i) => ({
+    name: `${c.name} - Div ${c.division}`,
+    code: c.id,
+    bg: colorPalette[i % colorPalette.length]
+  }));
 
   return (
     <div className="space-y-8 animate-fade-in">
