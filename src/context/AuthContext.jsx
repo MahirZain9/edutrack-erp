@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, isFirebaseConfigured } from '../firebase';
-import { signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged, signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged } from 'firebase/auth';
 import { dbService } from '../services/db';
 
 const AuthContext = createContext(null);
@@ -28,6 +28,16 @@ export const AuthProvider = ({ children }) => {
             });
           }
         } else {
+          // Check localStorage for Parent session (since parents don't use Firebase Auth)
+          const savedUser = localStorage.getItem('edutrack_current_user');
+          if (savedUser) {
+            const parsed = JSON.parse(savedUser);
+            if (parsed.role === 'Parent') {
+              setUser(parsed);
+              setLoading(false);
+              return;
+            }
+          }
           setUser(null);
         }
         setLoading(false);
@@ -53,10 +63,8 @@ export const AuthProvider = ({ children }) => {
         return matched;
       }
     }
-
     const users = await dbService.getUsers();
     const matchedUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-
     if (matchedUser && password === (matchedUser.role === 'Admin' ? 'admin123' : 'teacher123')) {
       setUser(matchedUser);
       localStorage.setItem('edutrack_current_user', JSON.stringify(matchedUser));
@@ -66,14 +74,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Login for Parent (Firebase Real OTP)
-  const loginParent = async (mobileNumber, firebaseUser) => {
+  // ✅ Login for Parent (Mobile Number + Child's Roll Number — No OTP needed)
+  const loginParent = async (mobileNumber, rollNumber) => {
     const students = await dbService.getStudents();
-    const childRecords = students.filter(s => s.parentMobile === mobileNumber);
 
-    if (childRecords.length === 0) {
-      throw new Error("Is mobile number se koi student registered nahi hai.");
+    // Find a student matching BOTH the parent mobile AND the roll number
+    const matchedStudent = students.find(
+      s => s.parentMobile === mobileNumber && s.rollNumber === rollNumber
+    );
+
+    if (!matchedStudent) {
+      throw new Error("Mobile number aur Roll Number match nahi hua. Kripya dobara check karein.");
     }
+
+    // Get ALL children belonging to this parent (siblings)
+    const childRecords = students.filter(s => s.parentMobile === mobileNumber);
 
     const parentUser = {
       uid: 'parent_' + mobileNumber,
