@@ -16,12 +16,13 @@ import Modal from '../components/Modal';
 import { formatINR, formatDate } from '../utils';
 
 const AdminDashboard = ({ setCurrentTab }) => {
-  const { students, fees, receipts, attendance, classes: dbClasses } = useDatabase();
+  const { students, fees, receipts, attendance, classes: dbClasses, addNotification } = useDatabase();
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [notiSubject, setNotiSubject] = useState('');
   const [notiBody, setNotiBody] = useState('');
   const [notiTarget, setNotiTarget] = useState('All');
   const [notiSuccess, setNotiSuccess] = useState(false);
+  const [notiSending, setNotiSending] = useState(false);
 
   // --- STATS CALCULATIONS ---
   const totalStudents = students.filter(s => s.status === 'Active').length;
@@ -73,15 +74,28 @@ const AdminDashboard = ({ setCurrentTab }) => {
     .filter(r => r.paymentDate === todayStr)
     .reduce((sum, r) => sum + r.amountPaid, 0);
 
-  const handleSendNotification = (e) => {
+  const handleSendNotification = async (e) => {
     e.preventDefault();
-    setNotiSuccess(true);
-    setTimeout(() => {
-      setNotiSuccess(false);
-      setNotificationModalOpen(false);
-      setNotiSubject('');
-      setNotiBody('');
-    }, 1500);
+    setNotiSending(true);
+    try {
+      await addNotification({
+        subject: notiSubject,
+        body: notiBody,
+        target: notiTarget
+      });
+      setNotiSuccess(true);
+      setTimeout(() => {
+        setNotiSuccess(false);
+        setNotificationModalOpen(false);
+        setNotiSubject('');
+        setNotiBody('');
+        setNotiTarget('All');
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to send notification:', err);
+    } finally {
+      setNotiSending(false);
+    }
   };
 
   const colorPalette = ['bg-emerald-500', 'bg-indigo-500', 'bg-rose-500', 'bg-amber-500', 'bg-sky-500', 'bg-purple-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500', 'bg-pink-500'];
@@ -297,7 +311,7 @@ const AdminDashboard = ({ setCurrentTab }) => {
           <div className="text-center py-8 space-y-3 animate-fade-in">
             <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
             <h4 className="text-lg font-bold text-slate-800">Notification Sent Successfully!</h4>
-            <p className="text-xs text-slate-400">Parents will receive SMS and portal alerts immediately.</p>
+            <p className="text-xs text-slate-400">Teachers and Parents will see this on their dashboard.</p>
           </div>
         ) : (
           <form onSubmit={handleSendNotification} className="space-y-4">
@@ -310,9 +324,8 @@ const AdminDashboard = ({ setCurrentTab }) => {
                 id="noti-target"
               >
                 <option value="All">All Parents & Teachers</option>
-                <option value="Std 10 - Div A">Parents of Std 10 - Div A</option>
-                <option value="Std 9 - Div A">Parents of Std 9 - Div A</option>
-                <option value="Teachers">All Teachers</option>
+                <option value="Parents">All Parents Only</option>
+                <option value="Teachers">All Teachers Only</option>
               </select>
             </div>
 
@@ -344,10 +357,11 @@ const AdminDashboard = ({ setCurrentTab }) => {
 
             <button
               type="submit"
-              className="w-full py-3 text-sm font-bold text-white school-gradient hover:school-gradient-hover rounded-xl shadow-md transition-all duration-200 hover-scale"
+              disabled={notiSending}
+              className="w-full py-3 text-sm font-bold text-white school-gradient hover:school-gradient-hover rounded-xl shadow-md transition-all duration-200 hover-scale disabled:opacity-50"
               id="noti-submit-btn"
             >
-              Broadcast Notification
+              {notiSending ? 'Sending...' : 'Broadcast Notification'}
             </button>
           </form>
         )}
