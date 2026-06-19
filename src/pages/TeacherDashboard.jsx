@@ -7,13 +7,14 @@ import {
   ArrowRight,
   TrendingUp,
   UserCheck2,
-  CheckSquare
+  CheckSquare,
+  BellRing
 } from 'lucide-react';
 import { formatDate } from '../utils';
 
 
 const TeacherDashboard = ({ user, setCurrentTab }) => {
-  const { students, classes, attendance } = useDatabase();
+  const { students, classes, attendance, notifications } = useDatabase();
   
   // Teacher's assigned class ID
   const classId = user.assignedClassId || 'c3'; // Fallback to Std 10 - Div A
@@ -21,6 +22,12 @@ const TeacherDashboard = ({ user, setCurrentTab }) => {
 
   // --- STATS & HISTORY FOR ASSIGNED CLASS ---
   const classStudents = students.filter(s => s.classId === classId && s.status === 'Active');
+
+  // Notifications relevant to Teachers
+  const relevantNotifications = notifications
+    .filter(n => n.target === 'All' || n.target === 'Teachers')
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 3);
 
   // Latest Attendance stats for this class
   const getLatestAttendanceStats = () => {
@@ -70,6 +77,24 @@ const TeacherDashboard = ({ user, setCurrentTab }) => {
           {classObj ? `${classObj.name} - Div ${classObj.division}` : 'Std 10 - Div A'}
         </div>
       </div>
+
+      {/* Notifications / Announcements */}
+      {relevantNotifications.length > 0 && (
+        <div className="space-y-3">
+          {relevantNotifications.map(n => (
+            <div key={n.id} className="p-5 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                <BellRing size={18} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-amber-800">{n.subject}</h4>
+                <p className="text-xs text-amber-700 mt-0.5">{n.body}</p>
+                <p className="text-[10px] text-amber-500 font-semibold mt-1.5">{formatDate(n.createdAt?.split('T')[0])}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Class Statistics grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
