@@ -27,6 +27,29 @@ const ReceiptPDF = ({ receipt, student, fee }) => {
 
   return (
     <div className="space-y-6">
+      {/* Print-specific styles */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #receipt-print-area, #receipt-print-area * {
+            visibility: visible;
+          }
+          #receipt-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 30px;
+            box-shadow: none;
+            border: none;
+          }
+        }
+      `}</style>
+
       {/* Receipt Paper Area */}
       <div 
         id="receipt-print-area" 
