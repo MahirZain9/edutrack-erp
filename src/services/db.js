@@ -314,5 +314,38 @@ export const dbService = {
     receipts.push(newReceipt);
     setLocal(KEYS.RECEIPTS, receipts);
     return newReceipt;
+  },
+
+  // --- NOTIFICATIONS ---
+  async getNotifications() {
+    if (isFirebaseConfigured) {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'notifications'));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (err) {
+        console.error("Firebase getNotifications failed, falling back to local:", err);
+      }
+    }
+    return JSON.parse(localStorage.getItem('edutrack_notifications')) || [];
+  },
+
+  async addNotification(notiData) {
+    const newNoti = {
+      ...notiData,
+      createdAt: new Date().toISOString()
+    };
+    if (isFirebaseConfigured) {
+      try {
+        const docRef = await addDoc(collection(db, 'notifications'), newNoti);
+        return { id: docRef.id, ...newNoti };
+      } catch (err) {
+        console.error("Firebase addNotification failed:", err);
+      }
+    }
+    const notifications = JSON.parse(localStorage.getItem('edutrack_notifications')) || [];
+    const localNoti = { id: 'noti_' + Math.random().toString(36).substr(2, 9), ...newNoti };
+    notifications.push(localNoti);
+    localStorage.setItem('edutrack_notifications', JSON.stringify(notifications));
+    return localNoti;
   }
 };
