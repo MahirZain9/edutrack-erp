@@ -1,47 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { auth } from '../firebase';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import logo from '../assets/logo.svg';
-import { Mail, Lock, Phone, KeyRound, Sparkles, LogIn } from 'lucide-react';
+import { Mail, Lock, Phone, Hash, Sparkles, LogIn } from 'lucide-react';
 
 const Login = () => {
   const { loginWithEmail, loginParent } = useAuth();
   const [activeTab, setActiveTab] = useState('staff');
 
+  // Staff inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // Parent inputs
   const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [rollNumber, setRollNumber] = useState('');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const recaptchaVerifierRef = useRef(null);
-
-  useEffect(() => {
-    if (activeTab === 'parent') {
-      setupRecaptcha();
-    }
-    return () => {
-      if (recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current.clear();
-        recaptchaVerifierRef.current = null;
-      }
-    };
-  }, [activeTab]);
-
-  const setupRecaptcha = () => {
-    if (recaptchaVerifierRef.current) return;
-    recaptchaVerifierRef.current = new RecaptchaVerifier(
-      auth,
-      'recaptcha-container',
-      { size: 'invisible' }
-    );
-  };
 
   const handleStaffLogin = async (e) => {
     e.preventDefault();
@@ -56,63 +31,25 @@ const Login = () => {
     }
   };
 
-  const handleSendOtp = async (e) => {
+  const handleParentLogin = async (e) => {
     e.preventDefault();
     if (!mobile || mobile.length < 10) {
       setError('Please enter a valid 10-digit mobile number.');
       return;
     }
-    setError('');
-    setLoading(true);
-    try {
-      if (!recaptchaVerifierRef.current) setupRecaptcha();
-      const result = await signInWithPhoneNumber(
-        auth,
-        '+91' + mobile,
-        recaptchaVerifierRef.current
-      );
-      setConfirmationResult(result);
-      setOtpSent(true);
-    } catch (err) {
-      setError(err.message || 'OTP send karne mein error aaya.');
-      if (recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current.clear();
-        recaptchaVerifierRef.current = null;
-      }
-      setupRecaptcha();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleParentLogin = async (e) => {
-    e.preventDefault();
-    if (!confirmationResult) {
-      setError('Pehle OTP bhejo.');
+    if (!rollNumber) {
+      setError("Please enter your child's roll number.");
       return;
     }
     setError('');
     setLoading(true);
     try {
-      const result = await confirmationResult.confirm(otp);
-      await loginParent(mobile, result.user);
+      await loginParent(mobile, rollNumber);
     } catch (err) {
-      setError('Invalid OTP. Dobara try karo.');
+      setError(err.message || 'Login failed. Please check your details.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleChangeNumber = () => {
-    setOtpSent(false);
-    setOtp('');
-    setConfirmationResult(null);
-    setError('');
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
-    setupRecaptcha();
   };
 
   return (
@@ -120,9 +57,6 @@ const Login = () => {
 
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-
-      {/* ✅ Zaroori hai — hatana mat */}
-      <div id="recaptcha-container"></div>
 
       <div className="relative w-full max-w-md space-y-8 p-8 bg-white/95 rounded-3xl shadow-2xl border border-white/20 glass-card">
 
@@ -136,7 +70,7 @@ const Login = () => {
 
         <div className="flex p-1 bg-slate-100 rounded-xl">
           <button
-            onClick={() => { setActiveTab('staff'); setError(''); setOtpSent(false); }}
+            onClick={() => { setActiveTab('staff'); setError(''); }}
             className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
               activeTab === 'staff' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
             }`}
@@ -201,29 +135,13 @@ const Login = () => {
               <p className="font-bold text-slate-600 mb-0.5 flex items-center gap-1">
                 <Sparkles size={12} className="text-amber-500" /> Sandbox Login Hints:
               </p>
-              <p>• <b>Admin</b>: admin@eracampus.com | admin123</p>
-              <p className="mt-0.5">• <b>Teacher</b>: teacher@eracampus.com | teacher123</p>
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem('eracampus_classes');
-                  localStorage.removeItem('eracampus_users');
-                  localStorage.removeItem('eracampus_students');
-                  localStorage.removeItem('eracampus_attendance');
-                  localStorage.removeItem('eracampus_fees');
-                  localStorage.removeItem('eracampus_receipts');
-                  localStorage.removeItem('eracampus_current_user');
-                  window.location.reload();
-                }}
-                className="w-full text-center mt-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold rounded-lg transition-colors"
-              >
-                Reset Database to Defaults
-              </button>
+              <p>• <b>Admin</b>: admin@edutrack.com | admin123</p>
+              <p className="mt-0.5">• <b>Teacher</b>: teacher@edutrack.com | teacher123</p>
             </div>
           </form>
 
         ) : (
-          <form className="mt-6 space-y-5" onSubmit={otpSent ? handleParentLogin : handleSendOtp}>
+          <form className="mt-6 space-y-5" onSubmit={handleParentLogin}>
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase px-1">Mobile Number</label>
@@ -231,75 +149,44 @@ const Login = () => {
                   <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="tel" required maxLength={10}
-                    disabled={otpSent} value={mobile}
+                    value={mobile}
                     onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                    className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 disabled:opacity-60"
+                    className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200"
                     placeholder="9876543210"
                   />
                 </div>
               </div>
 
-              {otpSent && (
-                <div className="animate-fade-in">
-                  <label className="text-xs font-bold text-slate-500 uppercase px-1">Verification OTP</label>
-                  <div className="relative mt-1">
-                    <KeyRound size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text" required maxLength={6} value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200"
-                      placeholder="6-digit OTP"
-                    />
-                  </div>
-                  <div className="flex justify-between items-center mt-2 px-1">
-                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">✅ OTP Sent!</span>
-                    <button type="button" onClick={handleChangeNumber}
-                      className="text-[10px] font-bold text-rose-600 hover:underline">
-                      Change Number
-                    </button>
-                  </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase px-1">Child's Roll Number</label>
+                <div className="relative mt-1">
+                  <Hash size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text" required
+                    value={rollNumber}
+                    onChange={(e) => setRollNumber(e.target.value.replace(/\D/g, ''))}
+                    className="block w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200"
+                    placeholder="e.g. 10"
+                  />
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="pt-2">
-              {otpSent ? (
-                <button type="submit" disabled={loading}
-                  className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50">
-                  <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                    <LogIn className="h-4 w-4 text-rose-200 group-hover:text-white" />
-                  </span>
-                  {loading ? 'Verifying OTP...' : 'Verify & Login'}
-                </button>
-              ) : (
-                <button type="submit" disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50">
-                  {loading ? 'Sending OTP...' : 'Request Verification OTP'}
-                </button>
-              )}
+              <button type="submit" disabled={loading}
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold text-white school-gradient rounded-xl shadow-md hover:shadow-lg focus:outline-none transition-all duration-200 hover-scale disabled:opacity-50">
+                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                  <LogIn className="h-4 w-4 text-rose-200 group-hover:text-white" />
+                </span>
+                {loading ? 'Signing In...' : 'Login'}
+              </button>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] text-slate-500 leading-normal">
               <p className="font-bold text-slate-600 mb-0.5 flex items-center gap-1">
                 <Sparkles size={12} className="text-amber-500" /> Note:
               </p>
-              <p>Real OTP aapke registered mobile number par aayega.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem('eracampus_classes');
-                  localStorage.removeItem('eracampus_users');
-                  localStorage.removeItem('eracampus_students');
-                  localStorage.removeItem('eracampus_attendance');
-                  localStorage.removeItem('eracampus_fees');
-                  localStorage.removeItem('eracampus_receipts');
-                  localStorage.removeItem('eracampus_current_user');
-                  window.location.reload();
-                }}
-                className="w-full text-center mt-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold rounded-lg transition-colors"
-              >
-                Reset Database to Defaults
-              </button>
+              <p>Apna registered mobile number aur bachhe ka roll number dalein.</p>
             </div>
           </form>
         )}
