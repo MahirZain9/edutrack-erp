@@ -16,16 +16,7 @@ import Modal from '../components/Modal';
 import { formatDate } from '../utils';
 
 const StudentManagement = () => {
-  // Replace this at the top of the file or inside the component before return
-  const classes = [
-    { id: 'std1', name: 'Std 1' }, { id: 'std2', name: 'Std 2' },
-    { id: 'std3', name: 'Std 3' }, { id: 'std4', name: 'Std 4' },
-    { id: 'std5', name: 'Std 5' }, { id: 'std6', name: 'Std 6' },
-    { id: 'std7', name: 'Std 7' }, { id: 'std8', name: 'Std 8' },
-    { id: 'std9', name: 'Std 9' }, { id: 'std10', name: 'Std 10' },
-    { id: 'std11', name: 'Std 11' }, { id: 'std12', name: 'Std 12' }
-  ];
-  const { students, addStudent, updateStudent, deleteStudent } = useDatabase();
+  const { students, classes, addStudent, updateStudent, deleteStudent } = useDatabase();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -476,7 +467,7 @@ const StudentManagement = () => {
                 id="form-student-class"
               >
                 {classes.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>{c.name} - Div {c.division}</option>
                 ))}
               </select>
             </div>
