@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Menu, Bell, Shield, User, LogOut, ChevronDown, Check } from 'lucide-react';
+import { Menu, Bell, Shield, User, LogOut, ChevronDown, Check, BellRing } from 'lucide-react';
 import { dbService } from '../services/db';
+import { useDatabase } from '../context/DatabaseContext';
+import { formatDate } from '../utils';
 
 const Header = ({ 
   sidebarOpen, 
@@ -10,9 +12,22 @@ const Header = ({
   onSwitchRole // callback to switch role quickly for testing
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { notifications } = useDatabase();
 
   // Quick switch options for demo
   const demoRoles = ['Admin', 'Teacher', 'Parent'];
+
+  // Filter notifications relevant to this user's role
+  const relevantNotifications = notifications
+    .filter(n => {
+      if (n.target === 'All') return true;
+      if (user?.role === 'Teacher' && n.target === 'Teachers') return true;
+      if (user?.role === 'Parent' && n.target === 'Parents') return true;
+      if (user?.role === 'Admin') return true; // Admin sees everything
+      return false;
+    })
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100 shadow-sm">
@@ -63,13 +78,49 @@ const Header = ({
         )}
 
         {/* Notification Bell */}
-        <button 
-          className="relative p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200"
-          id="header-notification-btn"
-        >
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setNotifOpen(!notifOpen)}
+            className="relative p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200"
+            id="header-notification-btn"
+          >
+            <Bell size={20} />
+            {relevantNotifications.length > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
+            )}
+          </button>
+
+          {notifOpen && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setNotifOpen(false)} />
+
+              <div className="absolute right-0 mt-2.5 w-80 bg-white rounded-2xl shadow-premium border border-slate-100 z-30 overflow-hidden animate-fade-in">
+                <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2">
+                  <BellRing size={16} className="text-rose-500" />
+                  <p className="text-sm font-bold text-slate-800">Notifications</p>
+                </div>
+
+                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                  {relevantNotifications.length === 0 ? (
+                    <div className="p-6 text-center text-slate-400 text-xs font-semibold">
+                      No notifications yet.
+                    </div>
+                  ) : (
+                    relevantNotifications.map(n => (
+                      <div key={n.id} className="p-3.5 hover:bg-slate-50/50 transition-colors">
+                        <p className="text-xs font-bold text-slate-800">{n.subject}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">{n.body}</p>
+                        <p className="text-[10px] text-rose-400 font-semibold mt-1.5">
+                          {n.createdAt ? formatDate(n.createdAt.split('T')[0]) : ''}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* User Dropdown */}
         <div className="relative">
