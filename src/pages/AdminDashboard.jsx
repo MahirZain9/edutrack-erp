@@ -12,6 +12,7 @@ import {
   ArrowRight,
   TrendingUp
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Modal from '../components/Modal';
 import { formatINR, formatDate } from '../utils';
 
@@ -58,6 +59,42 @@ const AdminDashboard = ({ setCurrentTab }) => {
   };
 
   const attStats = getLatestAttendanceStats();
+
+  // --- WEEKLY ATTENDANCE TREND (Last 7 days) ---
+  const getWeeklyTrend = () => {
+    const days = [];
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const label = dayLabels[d.getDay()];
+
+      let total = 0;
+      let present = 0;
+
+      Object.keys(attendance).forEach(key => {
+        if (key.endsWith(dateStr)) {
+          const records = attendance[key].records || {};
+          Object.keys(records).forEach(sId => {
+            total++;
+            if (records[sId] === 'Present' || records[sId] === 'Late') {
+              present++;
+            }
+          });
+        }
+      });
+
+      const percent = total > 0 ? Math.round((present / total) * 100) : 0;
+      days.push({ day: label, attendance: percent, hasData: total > 0 });
+    }
+
+    return days;
+  };
+
+  const weeklyTrend = getWeeklyTrend();
+  const hasAnyTrendData = weeklyTrend.some(d => d.hasData);
 
   // Fee Stats
   const totalCollection = fees
@@ -171,6 +208,46 @@ const AdminDashboard = ({ setCurrentTab }) => {
           </div>
         </div>
 
+      </div>
+
+      {/* Weekly Attendance Trend Chart */}
+      <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm">
+        <div className="flex justify-between items-center mb-5">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 tracking-tight">Weekly Attendance Trend</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Attendance percentage across the last 7 days</p>
+          </div>
+        </div>
+
+        {hasAnyTrendData ? (
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={weeklyTrend} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #f1f5f9', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                  formatter={(value) => [`${value}%`, 'Attendance']}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="attendance"
+                  stroke="#be123c"
+                  strokeWidth={3}
+                  dot={{ fill: '#be123c', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="h-64 flex flex-col items-center justify-center text-slate-400">
+            <CalendarCheck size={32} className="mb-2 opacity-40" />
+            <p className="text-sm font-semibold">No attendance data yet for this week.</p>
+            <p className="text-xs mt-0.5">Take attendance for a few days to see the trend.</p>
+          </div>
+        )}
       </div>
 
       {/* Quick Actions Panel */}
