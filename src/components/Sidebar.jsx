@@ -7,7 +7,8 @@ import {
   BookOpen, 
   ChevronLeft, 
   LogOut,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 import logo from '../assets/logo.svg';
 
@@ -29,6 +30,7 @@ const Sidebar = ({
           { id: 'students', label: 'Students', icon: Users },
           { id: 'attendance', label: 'Attendance', icon: CalendarCheck },
           { id: 'fees', label: 'Fees Management', icon: CreditCard },
+          { id: 'teacher-master', label: 'Teacher Master', icon: GraduationCap },
         ];
       case 'Teacher':
         return [
